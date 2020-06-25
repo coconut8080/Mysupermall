@@ -41,6 +41,7 @@ import backTop from "components/content/backTop/backTop";
 
 import { getHomeMultidata, getHomeGoods } from "network/home";
 import { debounce } from "common/utils";
+import { itemListenerMixin } from "common/mixin";
 
 export default {
   components: {
@@ -53,6 +54,7 @@ export default {
     Scroll,
     backTop
   },
+  mixins: [itemListenerMixin],
   data() {
     return {
       banners: [],
@@ -66,7 +68,8 @@ export default {
       isShowBackTop: false,
       tabOffsetTop: 0,
       isTabFixed: false,
-      saveY: 0
+      saveY: 0,
+      itemImgListener: null
     };
   },
   created() {
@@ -78,28 +81,33 @@ export default {
     this.getHomeGoods("sell");
   },
   mounted() {
-    // 1.图片加载完成的监听事件 Vue.prototype.$bus = new Vue()  @load="imageLoad"
-    // debounce添加防抖函数 优化性能
-    const refresh = debounce(this.$refs.scroll.refresh, 50);
-    this.$bus.$on("itemImageLoad", () => {
-      refresh();
-    });
+    // // 1.图片加载完成的监听事件 Vue.prototype.$bus = new Vue()  @load="imageLoad"
+    // // debounce添加防抖函数 优化性能
+    // const refresh = debounce(this.$refs.scroll.refresh, 50);
+    // // 对监听的事件进行保存
+    // this.itemImgListener = () => {
+    //   refresh();
+    // };
+    // this.$bus.$on("itemImageLoad", this.itemImgListener);
   },
-  destroyed() { 
+  destroyed() {
     console.log("home destroyed");
   },
   activated() {
     //页面活跃时
-    this.$refs.scroll.scrollTo(0,this.saveY,0)
+    this.$refs.scroll.scrollTo(0, this.saveY, 0);
     // console.log('activated：'+this.saveY);
 
-    // 刷新页面 
+    // 刷新页面
     this.$refs.scroll.refresh();
   },
   deactivated() {
     // 页面未选中时(不活跃)
     this.saveY = this.$refs.scroll.getSaveY();
     // console.log('deactivated：'+this.saveY);
+
+    // 取消全局事件的监听
+    this.$bus.$off("itemImageLoad", this.itemImgListener);
   },
   methods: {
     /**

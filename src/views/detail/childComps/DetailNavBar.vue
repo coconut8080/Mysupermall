@@ -34,6 +34,7 @@ export default {
   methods: {
     titleClick(index) {
       this.currentIndex = index;
+      this.$emit('titleClick',index)
     },
     // 点击返回上一页
     backClick(){

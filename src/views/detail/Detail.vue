@@ -1,15 +1,24 @@
 <!-- detail -->
 <template>
   <div id="detail">
-    <detail-nav-bar class="detail-nav"></detail-nav-bar>
-    <scroll class="content" ref="scroll">
+    <detail-nav-bar class="detail-nav" @titleClick="titleClick" ref="nav"></detail-nav-bar>
+    <scroll class="content" ref="scroll" @scroll="contentScroll" :probe-type="3">
       <detail-swiper :top-images="topImages"></detail-swiper>
       <detail-baseInfo :goods="goods"></detail-baseInfo>
       <detail-shop-info :shop="shop"></detail-shop-info>
       <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad"></detail-goods-info>
 
-      <detail-params-info :param-info="paramInfo"></detail-params-info>
+      <detail-params-info ref="params" :param-info="paramInfo"></detail-params-info>
+
+      <detail-comment-info ref="comment" :comment-info="commentInfo"></detail-comment-info>
+
+      <!-- <detail-recommend-info :recommend-list="recommendList"></detail-recommend-info> -->
+      <goods-list ref="recommend" :goods="recommendList"></goods-list>
     </scroll>
+    <!-- 底部工具栏 -->
+    <detail-bottom-bar></detail-bottom-bar>
+
+    <back-top @click.native="backClick" v-show="isShowBackTop" />
   </div>
 </template>
 
@@ -20,10 +29,25 @@ import DetailBaseInfo from "./childComps/DetailBaseInfo";
 import DetailShopInfo from "./childComps/DetailShopInfo";
 import DetailGoodsInfo from "./childComps/DetailGoodsInfo";
 import DetailParamsInfo from "./childComps/DetailParamsInfo";
+import DetailCommentInfo from "./childComps/DetailCommentInfo";
+// import DetailRecommendInfo from "./childComps/DetailRecommendInfo";
+import GoodsList from "components/content/goods/GoodsList";
+import DetailBottomBar from "./childComps/DetailBottomBar";
 
 import Scroll from "components/common/scroll/Scroll";
 
-import { getDetail, Goods, Shop, GoodsParam } from "network/detail";
+import { debounce } from "common/utils";
+
+import { itemListenerMixin, backTopMixin } from "common/mixin";
+
+import {
+  getDetail,
+  Goods,
+  Shop,
+  GoodsParam,
+  getRecommend
+} from "network/detail";
+
 export default {
   name: "Detail",
   components: {
@@ -33,6 +57,10 @@ export default {
     DetailShopInfo,
     DetailGoodsInfo,
     DetailParamsInfo,
+    DetailCommentInfo,
+    // DetailRecommendInfo,
+    GoodsList,
+    DetailBottomBar,
     Scroll
   },
   data() {
@@ -42,9 +70,15 @@ export default {
       goods: {},
       shop: {},
       detailInfo: {},
-      paramInfo: {}
+      paramInfo: {},
+      commentInfo: {},
+      recommendList: [],
+      themeTopYs: [],
+      getThemeTopYs: null,
+      currentIndex: 0
     };
   },
+  mixins: [itemListenerMixin, backTopMixin],
   created() {
     // 1. 保存传入的iid
     this.iid = this.$route.params.iid;
@@ -74,14 +108,88 @@ export default {
         data.itemParams.info,
         data.itemParams.rule
       );
+
+      // 6. 保存评论的数据
+      if (data.rate.list) {
+        this.commentInfo = data.rate.list[0];
+      }
     });
+
+    getRecommend().then((res, error) => {
+      if (error) return;
+      this.recommendList = res.data.list;
+      // console.log(this.recommendList);
+    });
+
+    // 使用防抖函数不用频繁获取 offsetTop
+    this.getThemeTopYs = debounce(() => {
+      this.themeTopYs = [];
+
+      this.themeTopYs.push(0);
+      this.themeTopYs.push(this.$refs.params.$el.offsetTop);
+      this.themeTopYs.push(this.$refs.comment.$el.offsetTop);
+      this.themeTopYs.push(this.$refs.recommend.$el.offsetTop);
+
+      // 获取js的最大值
+      this.themeTopYs.push(Number.MAX_VALUE);
+      console.log(this.themeTopYs);
+    }, 100);
   },
   destroyed() {
-    console.log("detail destroyed");
+    // console.log("detail destroyed");
+    this.$bus.$off("itemImageLoad", this.itemImgListener);
   },
   methods: {
     imageLoad() {
-      this.$refs.scroll.refresh();
+      // this.$refs.scroll.refresh();
+      this.refresh();
+
+      this.getThemeTopYs();
+    },
+    // nav的点击事件 从detailNavBar传过来的
+    titleClick(index) {
+      // console.log(index);
+      this.$refs.scroll.scrollTo(0, -this.themeTopYs[index], 200);
+    },
+    // 监听滚动到哪一个主题
+    contentScroll(position) {
+      // 获取Y值
+      const positionY = -position.y;
+      // console.log(position);
+      let length = this.themeTopYs.length;
+      // console.log(length); 4
+      // 方案一：
+      // for (let i = 0; i < length; i++) {
+      //   if (
+      //     this.currentIndex !== i &&
+      //     ((i < length - 1 &&
+      //       positionY >= this.themeTopYs[i] &&
+      //       positionY < this.themeTopYs[i + 1]) ||
+      //       (i === length - 1 && positionY > this.themeTopYs[i]))
+      //   ) {
+      //     // console.log(i);
+      //     this.currentIndex = i;
+      //     console.log(this.currentIndex);
+      //     this.$refs.nav.currentIndex = this.currentIndex;
+      //   }
+      // }
+
+      // 方案二：
+      for (let i = 0; i < length; i++) {
+        if (
+          this.currentIndex !== i &&
+          positionY >= this.themeTopYs[i] &&
+          positionY < this.themeTopYs[i + 1]
+        ) {
+          this.currentIndex = i;
+          console.log(this.currentIndex);
+        }
+      }
+      // 2.监听返回顶部显示 隐藏
+
+      // 判断backTop是否显示
+      // this.isShowBackTop = Math.abs(position.y) > 1000;
+      this.ShowBackTop(position);
     }
   }
 };

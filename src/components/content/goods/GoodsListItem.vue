@@ -1,7 +1,7 @@
 <!-- goodslistitem -->
 <template>
   <div class="goods-item" @click="itemClick">
-    <img :src="goodsItem.show.img" alt @load="imageLoad" />
+    <img :src="showImage" alt @load="imageLoad" />
     <div class="goods-info">
       <p>{{goodsItem.title}}</p>
       <span class="price">{{goodsItem.price}}</span>
@@ -23,15 +23,26 @@ export default {
   data() {
     return {};
   },
+  computed: {
+    showImage() {
+      return this.goodsItem.image || this.goodsItem.show.img;
+    }
+  },
   methods: {
     // 1.图片加载完成的监听事件 Vue.prototype.$bus = new Vue()
     imageLoad() {
       // console.log('itemImageLoad');
-      this.$bus.$emit("itemImageLoad");
+      // this.$bus.$emit("itemImageLoad");
+      this.$emit('imageLoad')
+      // if(this.$router.push('/home')) {
+      //   this.$bus.$emit("homeItemImgLoad")
+      // }else if(this.$router.push('/detail')){
+      //   this.$bus.$emit("detailItemImgLoad")
+      // }
     },
     // 点击图片跳转到详情页
     itemClick() {
-      this.$router.push('/detail/' + this.goodsItem.iid)
+      this.$router.push("/detail/" + this.goodsItem.iid);
     }
   }
 };
