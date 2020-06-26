@@ -19,7 +19,7 @@ export const itemListenerMixin = {
       this.refresh();
     };
     this.$bus.$on("itemImageLoad", this.itemImgListener);
-    console.log('我是混入中的内容');
+    // console.log('我是混入中的内容');
 
   },
 }

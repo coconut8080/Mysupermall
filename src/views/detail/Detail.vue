@@ -14,9 +14,11 @@
 
       <!-- <detail-recommend-info :recommend-list="recommendList"></detail-recommend-info> -->
       <goods-list ref="recommend" :goods="recommendList"></goods-list>
+
+      <!-- {{$store.state.cartList}} -->
     </scroll>
     <!-- 底部工具栏 -->
-    <detail-bottom-bar></detail-bottom-bar>
+    <detail-bottom-bar @addCart="addToCart"></detail-bottom-bar>
 
     <back-top @click.native="backClick" v-show="isShowBackTop" />
   </div>
@@ -132,7 +134,7 @@ export default {
 
       // 获取js的最大值
       this.themeTopYs.push(Number.MAX_VALUE);
-      console.log(this.themeTopYs);
+      // console.log(this.themeTopYs);
     }, 100);
   },
   destroyed() {
@@ -182,7 +184,7 @@ export default {
           positionY < this.themeTopYs[i + 1]
         ) {
           this.currentIndex = i;
-          console.log(this.currentIndex);
+          // console.log(this.currentIndex);
         }
       }
       // 2.监听返回顶部显示 隐藏
@@ -190,6 +192,25 @@ export default {
       // 判断backTop是否显示
       // this.isShowBackTop = Math.abs(position.y) > 1000;
       this.ShowBackTop(position);
+    },
+    // 点击加入购物车
+    addToCart() {
+      console.log("点击加入购物车");
+      // 1 创建对象
+      const product = {};
+
+      // 对象信息
+      product.iid = this.iid;
+      product.imgURL = this.topImages[0];
+      product.title = this.goods.title;
+      product.desc = this.goods.desc;
+      product.newPrice = this.goods.realPrice;
+
+      // console.log(obj);
+      // this.$store.commit('addCart',product)
+      this.$store.dispatch("addCart", product);
+     console.log(this.$store.state.cartList);
+      
     }
   }
 };
