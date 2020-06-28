@@ -42,6 +42,8 @@ import { debounce } from "common/utils";
 
 import { itemListenerMixin, backTopMixin } from "common/mixin";
 
+import { mapActions } from "vuex";
+
 import {
   getDetail,
   Goods,
@@ -142,6 +144,7 @@ export default {
     this.$bus.$off("itemImageLoad", this.itemImgListener);
   },
   methods: {
+    ...mapActions(["addCart"]),
     imageLoad() {
       // this.$refs.scroll.refresh();
       this.refresh();
@@ -208,9 +211,15 @@ export default {
 
       // console.log(obj);
       // this.$store.commit('addCart',product)
-      this.$store.dispatch("addCart", product);
-     console.log(this.$store.state.cartList);
-      
+      // this.$store.dispatch("addCart", product);
+
+      this.addCart(product).then(res => {   
+        // console.log(this.$toast);
+        this.$toast.show(res, 2000);
+        console.log(res);
+        
+      });
+      //  console.log(this.$store.state.cartList);
     }
   }
 };

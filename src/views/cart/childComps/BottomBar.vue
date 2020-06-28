@@ -4,7 +4,7 @@
     <check-button :value="isSelectAll" class="select-all" @click.native="checkClick" />
     <span>全选</span>
     <span class="total-price">合计:{{totalPrice}}</span>
-    <span class="buy-product">结算({{cartCount}})</span>
+    <span class="buy-product" @click="buyClick">结算({{cartCount}})</span>
   </div>
 </template>
 
@@ -56,6 +56,12 @@ export default {
       } else {
         //部分或者全部不选择中
         this.cartList.forEach(item => (item.checked = true));
+      }
+    },
+    // 结算吐司
+    buyClick(){
+      if(!this.isSelectAll){
+        this.$toast.show('请选择商品',2000)
       }
     }
   }
